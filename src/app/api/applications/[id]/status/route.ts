@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { verifyEdgeToken } from "@/lib/edge-auth";
 import { sendApplicationStatusEmail } from "@/lib/email";
 
