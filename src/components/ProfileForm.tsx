@@ -158,14 +158,12 @@ export default function ProfileForm({
     if (selectedAvatarFile) {
       handleAvatarUpload();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAvatarFile]);
 
   useEffect(() => {
     if (selectedResumeFile) {
       handleResumeUpload();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedResumeFile]);
 
   const handleInputChange = (field: string, value: string | number) => {
