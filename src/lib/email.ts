@@ -122,12 +122,28 @@ export async function sendOTPEmail(data: EmailOTPData): Promise<EmailResponse> {
     // Enhanced error logging for debugging
     if (error && typeof error === 'object' && 'response' in error) {
       const httpError = error as { response?: { statusCode?: number; body?: unknown } };
+      const errorBody = httpError.response?.body as { message?: string; code?: string } | undefined;
+      
       console.error("HTTP Error Details:", {
         statusCode: httpError.response?.statusCode,
         body: httpError.response?.body,
         apiKeyPresent: !!process.env.BREVO_API_KEY,
         apiKeyLength: process.env.BREVO_API_KEY?.length || 0,
       });
+
+      // Check for IP restriction error
+      if (httpError.response?.statusCode === 401 && errorBody?.code === 'unauthorized') {
+        if (errorBody.message?.includes('unrecognised IP address')) {
+          console.error("⚠️ BREVO IP RESTRICTION ERROR:");
+          console.error("Your server IP is not authorized in Brevo.");
+          console.error("Go to: https://app.brevo.com/security/authorised_ips");
+          console.error("Either disable IP restrictions or add your server IPs.");
+          return {
+            success: false,
+            error: "Email service configuration error: Server IP not authorized in Brevo. Please contact administrator.",
+          };
+        }
+      }
     }
 
     return {
