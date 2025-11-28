@@ -2,9 +2,13 @@ import * as SibApiV3Sdk from "@getbrevo/brevo";
 
 // Initialize Brevo API client
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+const brevoApiKey = process.env.BREVO_API_KEY || "";
+if (!brevoApiKey) {
+  console.error("BREVO_API_KEY is not set in environment variables");
+}
 apiInstance.setApiKey(
   SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY || ""
+  brevoApiKey
 );
 
 // Email data interfaces
@@ -85,7 +89,8 @@ export async function sendOTPEmail(data: EmailOTPData): Promise<EmailResponse> {
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
     sendSmtpEmail.to = [{ email: data.email }];
-    sendSmtpEmail.templateId = parseInt(process.env.BREVO_TEMPLATE_ID || "1");
+    // WARNING: Hardcoded template ID - should use environment variable
+    sendSmtpEmail.templateId = parseInt(process.env.BREVO_TEMPLATE_ID || "1") || 1;
     sendSmtpEmail.params = {
       OTP: data.otp,
       USER_NAME: data.userName || "User",
@@ -102,8 +107,20 @@ export async function sendOTPEmail(data: EmailOTPData): Promise<EmailResponse> {
       success: true,
       messageId: "sent",
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to send email:", error);
+    
+    // Enhanced error logging for debugging
+    if (error && typeof error === 'object' && 'response' in error) {
+      const httpError = error as { response?: { statusCode?: number; body?: unknown } };
+      console.error("HTTP Error Details:", {
+        statusCode: httpError.response?.statusCode,
+        body: httpError.response?.body,
+        apiKeyPresent: !!process.env.BREVO_API_KEY,
+        apiKeyLength: process.env.BREVO_API_KEY?.length || 0,
+      });
+    }
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
