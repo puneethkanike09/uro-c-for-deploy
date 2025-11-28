@@ -85,6 +85,15 @@ export interface EmailResponse {
  */
 export async function sendOTPEmail(data: EmailOTPData): Promise<EmailResponse> {
   try {
+    // Check if API key is configured
+    if (!process.env.BREVO_API_KEY) {
+      console.error("BREVO_API_KEY is missing from environment variables");
+      return {
+        success: false,
+        error: "Email service is not configured. BREVO_API_KEY is missing.",
+      };
+    }
+
     // Create email content
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
@@ -109,7 +118,7 @@ export async function sendOTPEmail(data: EmailOTPData): Promise<EmailResponse> {
     };
   } catch (error: unknown) {
     console.error("Failed to send email:", error);
-    
+
     // Enhanced error logging for debugging
     if (error && typeof error === 'object' && 'response' in error) {
       const httpError = error as { response?: { statusCode?: number; body?: unknown } };
@@ -120,7 +129,7 @@ export async function sendOTPEmail(data: EmailOTPData): Promise<EmailResponse> {
         apiKeyLength: process.env.BREVO_API_KEY?.length || 0,
       });
     }
-    
+
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -385,9 +394,8 @@ export async function sendMenteeOpportunityApprovalEmail(
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
     sendSmtpEmail.to = [{ email: data.menteeEmail }];
-    sendSmtpEmail.subject = `Opportunity Submission ${
-      data.isConverted ? "Approved & Converted" : "Approved"
-    }: ${data.opportunityTitle}`;
+    sendSmtpEmail.subject = `Opportunity Submission ${data.isConverted ? "Approved & Converted" : "Approved"
+      }: ${data.opportunityTitle}`;
 
     const statusMessage = data.isConverted
       ? "Your opportunity has been approved and converted to a regular opportunity on the platform!"
@@ -408,11 +416,10 @@ export async function sendMenteeOpportunityApprovalEmail(
             <p><strong>Title:</strong> ${data.opportunityTitle}</p>
             <p><strong>Type:</strong> ${data.opportunityType}</p>
             ${conversionNote}
-            ${
-              data.adminNotes
-                ? `<p><strong>Admin Notes:</strong> ${data.adminNotes}</p>`
-                : ""
-            }
+            ${data.adminNotes
+        ? `<p><strong>Admin Notes:</strong> ${data.adminNotes}</p>`
+        : ""
+      }
           </div>
           <p>Thank you for contributing to the UroCareerz community!</p>
           <p>Best regards,<br>The UroCareerz Team</p>
